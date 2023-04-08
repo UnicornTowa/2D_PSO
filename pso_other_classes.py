@@ -50,21 +50,13 @@ class Draw3DWindow(QWidget):
 
     # Построение и отображение графика
     def draw_html(self) -> None:
-        z = pso.fitness_function
         x1, x2, y1, y2 = pso.ranges.values()
-        _x, _y = np.mgrid[x1:x2:10j * round(x2 - x1), y1:y2:10j * round(y2 - y1)]
-        _z = np.zeros((10 * round(x2 - x1), 10 * round(y2 - y1)), dtype=float)
-        i = 0
-        for x in _x:
-            j = 0
-            for y in _y:
-                _z[i][j] = z(x[i], y[j])
-                j += 1
-            i += 1
+        x, y = np.mgrid[x1:x2:10j * round(x2 - x1), y1:y2:10j * round(y2 - y1)]
+        z = np.vectorize(pso.fitness_function)(x, y)
         fig = go.Figure(go.Surface(
-            x=_x,
-            y=_y,
-            z=_z,
+            x=x,
+            y=y,
+            z=z,
         ))
 
         if self.particles is not None:
@@ -175,7 +167,7 @@ class RangesWindow(QWidget):
 
 class Draw2D(FigureCanvasQTAgg, QWidget):
 
-    def __init__(self, parent=None, width=100, height=4, dpi=100):
+    def __init__(self, width=100, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
         super(Draw2D, self).__init__(self.fig)

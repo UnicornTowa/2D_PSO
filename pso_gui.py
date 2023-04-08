@@ -1,18 +1,19 @@
 import random
-from random import randint, choice
 import sys
 from functools import partial
 # noinspection PyUnresolvedReferences
 from math import *
+from random import randint
 
 import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QCheckBox, QMainWindow, QDockWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QPushButton, QCheckBox, QMainWindow
 
 import common
 import pso
 import pso_other_classes
+
 
 # Расстояние между точками
 def pho(a, b):
@@ -202,7 +203,7 @@ class MainWindow(QMainWindow):
         self.run1000_button.setFont(common.f)
         self.run_new_button.setFont(common.f)
 
-        self.canvas = pso_other_classes.Draw2D(parent=self, width=5, height=4, dpi=100)
+        self.canvas = pso_other_classes.Draw2D(width=5, height=4, dpi=100)
         self.canvas.fig.tight_layout()
         self.canvas.move(450, 45)
         self.canvas.setFixedSize(500, 500)
@@ -221,27 +222,21 @@ class MainWindow(QMainWindow):
         self.canvas.axes.set_xlim(x1, x2)
         self.canvas.axes.set_ylim(y1, y2)
         x, y = np.mgrid[x1:x2:10j * round(x2 - x1), y1:y2:10j * round(y2 - y1)]
-        z = np.zeros((10 * round(x2 - x1), 10 * round(y2 - y1)), dtype=float)
-        i = 0
-        for a in x:
-            j = 0
-            for b in y:
-                z[i][j] = pso.fitness_function(a[i], b[j])
-                j += 1
-            i += 1
-        self.canvas.axes.contour(x, y, z)
+        z = np.vectorize(pso.fitness_function)(x, y)
+        self.canvas.axes.contour(x, y, z, alpha=0.5)
         self.canvas.draw()
 
 
     def update_graph(self, scat=None):
         if scat:
             scat.remove()
-        x_s = []
-        y_s = []
-        for i in range(len(self.swarm.swarm)):
-            pos = self.swarm.swarm[i].pos
-            x_s.append(pos[0])
-            y_s.append(pos[1])
+        num_of_particles = self.swarm.swarm.size
+        x_s = np.empty((1, num_of_particles), dtype=float)
+        y_s = np.empty((1, num_of_particles), dtype=float)
+        for i in range(num_of_particles):
+            pos = self.swarm.swarm[0][i].pos
+            x_s[0][i] = (pos[0])
+            y_s[0][i] = (pos[1])
         new_scat = self.canvas.axes.scatter(x_s, y_s, c=random.choice(common.colors))
         self.canvas.draw()
         return new_scat
@@ -268,7 +263,7 @@ class MainWindow(QMainWindow):
 
     # Построение графика
     def draw_3d(self):
-        self.draw_window = pso_other_classes.Draw3DWindow(particles=self.swarm.swarm)
+        self.draw_window = pso_other_classes.Draw3DWindow(particles=self.swarm.swarm[0])
         self.draw_window.show()
 
 
@@ -293,7 +288,6 @@ class MainWindow(QMainWindow):
 
     # Присвоение значений полям в блоке результатов
     def set_res(self, ff, sol, i):
-        print(str(ff), str(sol[0]), str(sol[1]), str(i))
         self.best_sol.setText('f(x,y): ' + str(ff))
         self.best_sol_coord.setText('x:       ' + str(sol[0]) + '\ny:       ' + str(sol[1]))
         self.iters.setText('Iterations finished: ' + str(i))

@@ -2,7 +2,6 @@ import random
 from copy import deepcopy
 import numpy as np
 
-
 # Функция, которую мы будем минимизировать
 def fitness_function(x, y):
     return x ** 2 + 3 * y ** 2 + 2 * x * y
@@ -11,7 +10,6 @@ def fitness_function(x, y):
 # Другое представление функции
 def ff(x):
     return fitness_function(x[0], x[1])
-
 
 # Копия исходной функции и метод сброса,
 # (для возврата к исходной функции после использования кастомной)
@@ -67,15 +65,12 @@ class Particle:
             return self.best_pos
         else:
             return None
-
-
+vectorized_particles = np.vectorize(lambda x: Particle())
 class PSO:
     def __init__(self):
-        self.swarm = []
         self.iters = 0
-        for _ in range(args['num_of_particles']):
-            self.swarm.append(Particle())
-        self.global_best = np.array(deepcopy(min(self.swarm, key=lambda x: ff(x.best_pos)).best_pos))
+        self.swarm = vectorized_particles(np.empty([1, args['num_of_particles']], dtype=Particle))
+        self.global_best = np.array(deepcopy(min(self.swarm[0], key=lambda x: ff(x.best_pos)).best_pos))
         print('iter:', self.iters, 'best:', self.global_best, 'min:', ff(self.global_best))
 
 
@@ -84,7 +79,7 @@ class PSO:
     def pso(self, iterations):
         for _ in range(iterations):
             self.iters += 1
-            for particle in self.swarm:
+            for particle in self.swarm[0]:
                 particle.update_velocity(self.global_best)
                 particle_best = particle.update_pos()
                 if particle_best is not None and fitness_function(*particle_best) < fitness_function(*self.global_best):
